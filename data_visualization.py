@@ -53,7 +53,10 @@ def get_emails_addresses_linked_to_contact_id(contact_id):
 
 def get_messages_linked_to_contact_id(contact_id):
     """
-    
+    Sample of output
+    SENDER      | RECEIVERS     | SENDER NAME   | REVEIVERS NAMES   | DATE      | TIME  | CONTENT
+    +32487123456| +32487654321  | John          | Jane              | 20230907  | 215045| Hello!
+    john@doe.be | Jane@doe.be   | John          | Jane              | 20230907  | 215045| Hello!
 
     :param contact_id:
     :return:
@@ -83,77 +86,43 @@ def get_messages_linked_to_contact_id(contact_id):
                             FROM ContactPhoneNumbers
                             WHERE contact_id = {your_contact_id})"""
 
-    query_2_emails = f""" SELECT   C.first_name || ' ' || C.last_name AS [Sender Name],
-                            CE.email [Sender Address],
+    query_2_emails = f"""
+                        SELECT
+                            C.first_name || ' ' || C.last_name AS [Sender name],
+                            CE.email AS [Sender address],
                             CASE
                                 WHEN RE.is_cc = 0 AND RE.is_bcc = 0 THEN 'Destinataire direct'
                                 WHEN RE.is_cc = 1 AND RE.is_bcc = 0 THEN 'Destinataire en copie'
                                 WHEN RE.is_cc = 0 AND RE.is_bcc = 1 THEN 'Destinataire caché'
                                 ELSE 'Autre' -- Gérer d'autres cas si nécessaire
                             END AS "Recipient Type",
-                            C_RE.first_name || ' ' || C_RE.last_name AS [Recipient name],
-                            CE_RE.email [Recipient Email],
+                            C2.first_name || ' ' || C2.last_name AS [Recipient name],
+                            CE2.email [Recipient email],
                             E.date AS [Date],
                             E.time AS [Time],
                             E.original_filename AS [Original filename],
                             E.content AS [Content],
                             (
-                                SELECT GROUP_CONCAT(filename, ', ')
-                                FROM Attachments AS A
-                                WHERE A.message_id = E.message_id
-                            )
-                    FROM Contacts AS C
-                    JOIN ContactEmails AS CE
-                    ON CE.contact_id = C.contact_id
-                    JOIN Emails AS E
-                    ON E.sender_email_id = CE.email_id
-                    JOIN RecipientEmails AS RE
-                    ON RE.message_id = E.message_id
-                    JOIN ContactEmails AS CE_RE
-                    ON CE_RE.email_id = RE.email_id
-                    JOIN Contacts AS C_RE
-                    ON C_RE.contact_id = CE_RE.contact_id
-                    JOIN Attachments AS A
-                    ON A.message_id = E.message_id
-                    WHERE C.contact_id = {contact_id}
-                    
-                    UNION
-                    
-                    SELECT  C2.first_name || ' ' || C2.last_name AS [Sender Name],
-                            CE2.email [Sender Address],
-                            CASE
-                                WHEN RE2.is_cc = 0 AND RE2.is_bcc = 0 THEN 'Destinataire direct'
-                                WHEN RE2.is_cc = 1 AND RE2.is_bcc = 0 THEN 'Destinataire en copie'
-                                WHEN RE2.is_cc = 0 AND RE2.is_bcc = 1 THEN 'Destinataire caché'
-                                ELSE 'Autre' -- Gérer d'autres cas si nécessaire
-                            END AS "Recipient Type",
-                            C_RE2.first_name || ' ' || C_RE2.last_name AS [Recipient name],
-                            CE_RE2.email [Recipient Email],
-                            E2.date AS [Date],
-                            E2.time AS [Time],
-                            E2.original_filename AS [Original filename],
-                            E2.content AS [Content],
-                            (
-                                SELECT GROUP_CONCAT(filename, ', ')
-                                FROM Attachments AS A2
-                                WHERE A2.message_id = E2.message_id
-                            )
-                            
-                    FROM Contacts AS C_RE2
-                    JOIN ContactEmails AS CE_RE2
-                    ON CE_RE2.contact_id = C_RE2.contact_id
-                    JOIN RecipientEmails AS RE2
-                    ON RE2.email_id = CE_RE2.email_id
-                    JOIN Emails AS E2
-                    ON E2.message_id = RE2.message_id
-                    JOIN ContactEmails AS CE2
-                    ON CE2.email_id = E2.sender_email_id
-                    JOIN Contacts AS C2
-                    ON C2.contact_id = CE2.contact_id
-                    JOIN Attachments AS A2
-                    ON A2.message_id = E2.message_id
-                    
-                    WHERE C_RE2.contact_id = {contact_id} """
+                                    SELECT GROUP_CONCAT(filename, ', ')
+                                    FROM Attachments AS A
+                                    WHERE A.message_id = E.message_id
+                                ) AS [Attachments]
+                        FROM Emails AS E
+                        JOIN ContactEmails AS CE
+                        ON E.sender_email_id = CE.email_id
+                        JOIN Contacts AS C
+                        ON CE.contact_id = C.contact_id
+                        JOIN RecipientEmails AS RE
+                        ON E.message_id = RE.message_id
+                        JOIN ContactEmails AS CE2
+                        ON RE.email_id = CE2.email_id
+                        JOIN Contacts AS C2
+                        ON CE2.contact_id = C2.contact_id
+                        LEFT JOIN Attachments AS A
+                        ON A.message_id = E.message_id
+                        
+                        
+                        WHERE C.contact_id = {contact_id} OR C2.contact_id = {contact_id}"""
 
     query_3_union = f"""
                         UNION
@@ -264,9 +233,8 @@ def get_messages_linked_to_contact_id(contact_id):
                     GROUP BY M.mms_id
                 """
 
-    query_end_order = f"""
-                        ORDER BY Date, Time
-                        """
+    query_end_order = f"""  GROUP BY E.message_id
+                                ORDER BY Date, Time """
 
     query = query_1_sms_with + query_2_emails + query_3_union + query_4_sms + query_5_union + query_6_mms + query_end_order
 
@@ -310,77 +278,43 @@ def find_messages_with_word(contact_id, word):
                             FROM ContactPhoneNumbers
                             WHERE contact_id = {your_contact_id})"""
 
-    query_2_emails = f""" SELECT   C.first_name || ' ' || C.last_name AS [Sender Name],
-                            CE.email [Sender Address],
-                            CASE
-                                WHEN RE.is_cc = 0 AND RE.is_bcc = 0 THEN 'Destinataire direct'
-                                WHEN RE.is_cc = 1 AND RE.is_bcc = 0 THEN 'Destinataire en copie'
-                                WHEN RE.is_cc = 0 AND RE.is_bcc = 1 THEN 'Destinataire caché'
-                                ELSE 'Autre' -- Gérer d'autres cas si nécessaire
-                            END AS "Recipient Type",
-                            C_RE.first_name || ' ' || C_RE.last_name AS [Recipient name],
-                            CE_RE.email [Recipient Email],
-                            E.date AS [Date],
-                            E.time AS [Time],
-                            E.original_filename AS [Original filename],
-                            E.content AS [Content],
-                            (
-                                SELECT GROUP_CONCAT(filename, ', ')
-                                FROM Attachments AS A
-                                WHERE A.message_id = E.message_id
-                            )
-                    FROM Contacts AS C
-                    JOIN ContactEmails AS CE
-                    ON CE.contact_id = C.contact_id
-                    JOIN Emails AS E
-                    ON E.sender_email_id = CE.email_id
-                    JOIN RecipientEmails AS RE
-                    ON RE.message_id = E.message_id
-                    JOIN ContactEmails AS CE_RE
-                    ON CE_RE.email_id = RE.email_id
-                    JOIN Contacts AS C_RE
-                    ON C_RE.contact_id = CE_RE.contact_id
-                    JOIN Attachments AS A
-                    ON A.message_id = E.message_id
-                    WHERE C.contact_id = {contact_id} AND E.content LIKE '%{word}%'
+    query_2_emails = f"""
+                            SELECT
+                                C.first_name || ' ' || C.last_name AS [Sender name],
+                                CE.email AS [Sender address],
+                                CASE
+                                    WHEN RE.is_cc = 0 AND RE.is_bcc = 0 THEN 'Destinataire direct'
+                                    WHEN RE.is_cc = 1 AND RE.is_bcc = 0 THEN 'Destinataire en copie'
+                                    WHEN RE.is_cc = 0 AND RE.is_bcc = 1 THEN 'Destinataire caché'
+                                    ELSE 'Autre' -- Gérer d'autres cas si nécessaire
+                                END AS "Recipient Type",
+                                C2.first_name || ' ' || C2.last_name AS [Recipient name],
+                                CE2.email [Recipient email],
+                                E.date AS [Date],
+                                E.time AS [Time],
+                                E.original_filename AS [Original filename],
+                                E.content AS [Content],
+                                (
+                                        SELECT GROUP_CONCAT(filename, ', ')
+                                        FROM Attachments AS A
+                                        WHERE A.message_id = E.message_id
+                                    ) AS [Attachments]
+                            FROM Emails AS E
+                            JOIN ContactEmails AS CE
+                            ON E.sender_email_id = CE.email_id
+                            JOIN Contacts AS C
+                            ON CE.contact_id = C.contact_id
+                            JOIN RecipientEmails AS RE
+                            ON E.message_id = RE.message_id
+                            JOIN ContactEmails AS CE2
+                            ON RE.email_id = CE2.email_id
+                            JOIN Contacts AS C2
+                            ON CE2.contact_id = C2.contact_id
+                            LEFT JOIN Attachments AS A
+                            ON A.message_id = E.message_id
 
-                    UNION
 
-                    SELECT  C2.first_name || ' ' || C2.last_name AS [Sender Name],
-                            CE2.email [Sender Address],
-                            CASE
-                                WHEN RE2.is_cc = 0 AND RE2.is_bcc = 0 THEN 'Destinataire direct'
-                                WHEN RE2.is_cc = 1 AND RE2.is_bcc = 0 THEN 'Destinataire en copie'
-                                WHEN RE2.is_cc = 0 AND RE2.is_bcc = 1 THEN 'Destinataire caché'
-                                ELSE 'Autre' -- Gérer d'autres cas si nécessaire
-                            END AS "Recipient Type",
-                            C_RE2.first_name || ' ' || C_RE2.last_name AS [Recipient name],
-                            CE_RE2.email [Recipient Email],
-                            E2.date AS [Date],
-                            E2.time AS [Time],
-                            E2.original_filename AS [Original filename],
-                            E2.content AS [Content],
-                            (
-                                SELECT GROUP_CONCAT(filename, ', ')
-                                FROM Attachments AS A2
-                                WHERE A2.message_id = E2.message_id
-                            )
-
-                    FROM Contacts AS C_RE2
-                    JOIN ContactEmails AS CE_RE2
-                    ON CE_RE2.contact_id = C_RE2.contact_id
-                    JOIN RecipientEmails AS RE2
-                    ON RE2.email_id = CE_RE2.email_id
-                    JOIN Emails AS E2
-                    ON E2.message_id = RE2.message_id
-                    JOIN ContactEmails AS CE2
-                    ON CE2.email_id = E2.sender_email_id
-                    JOIN Contacts AS C2
-                    ON C2.contact_id = CE2.contact_id
-                    JOIN Attachments AS A2
-                    ON A2.message_id = E2.message_id
-
-                    WHERE C_RE2.contact_id = {contact_id} AND E2.content LIKE '%{word}%'"""
+                            WHERE (C.contact_id = {contact_id} OR C2.contact_id = {contact_id}) AND Content LIKE '%{word}%'"""
 
     query_3_union = f""" UNION """
 
@@ -389,30 +323,28 @@ def find_messages_with_word(contact_id, word):
                                 WHEN S.type = "1" THEN C_SMS.first_name || ' ' || C_SMS.last_name
                                 WHEN S.type = "2" THEN (SELECT first_name || ' ' || last_name FROM MeContact)
                                 ELSE 'ERROR !'
-                            END AS [Sender Name],
+                            END AS [Sender name],
                             CASE
                                 WHEN S.type = "1" THEN CPN.phone
                                 WHEN S.type = "2" THEN (SELECT phone FROM MeAddress)
                                 ELSE 'ERROR !'
-                            END AS [Sender Address],
-                            'Destinataire direct' AS [Recipient Type],
+                            END AS [Sender address],
+                            'Destinataire direct' AS [Recipient type],
                             CASE
                                 WHEN S.type = "1" THEN (SELECT first_name || ' ' || last_name FROM MeContact)
                                 WHEN S.type = "2" THEN C_SMS.first_name || ' ' || C_SMS.last_name
                                 ELSE 'ERROR !'
-                            END AS [Recipient Name],
+                            END AS [Recipient name],
                             CASE
                                 WHEN S.type = "1" THEN (SELECT phone FROM MeAddress)
                                 WHEN S.type = "2" THEN CPN.phone
                                 ELSE 'ERROR !'
-                            END AS [Recipient Address],
+                            END AS [Recipient address],
                             S.date AS [Date],
                             S.time AS [Time],
                             S.original_filename AS [Original filename],
                             S.body AS [Content],
                             "" AS [Attachments]
-
-
                         FROM Sms AS S
                         JOIN Sms_ContactPhoneNumber AS SCPN
                         ON SCPN.sms_id = S.sms_id
@@ -420,7 +352,7 @@ def find_messages_with_word(contact_id, word):
                         ON CPN.phone_id = SCPN.phone_id
                         JOIN Contacts AS C_SMS
                         ON C_SMS.contact_id = CPN.contact_id
-                        WHERE C_SMS.contact_id = {contact_id} AND S.body LIKE '%{word}%'"""
+                        WHERE C_SMS.contact_id = {contact_id} AND Content LIKE '%{word}%'"""
 
     query_5_union = f""" UNION """
 
@@ -429,23 +361,23 @@ def find_messages_with_word(contact_id, word):
                             WHEN M.msg_box = "1" THEN C_MMS.first_name || ' ' || C_MMS.last_name
                             WHEN M.msg_box = "2" THEN (SELECT first_name || ' ' || last_name FROM MeContact)
                             ELSE 'ERROR !'
-                        END AS [Sender Name],
+                        END AS [Sender name],
                         CASE
                             WHEN M.msg_box = "1" THEN CPN2.phone
                             WHEN M.msg_box = "2" THEN (SELECT phone FROM MeAddress)
                             ELSE 'ERROR !'
-                        END AS [Sender Address],
-                        'Destinataire direct' AS [Recipient Type],
+                        END AS [Sender address],
+                        'Destinataire direct' AS [Recipient type],
                         CASE
                             WHEN M.msg_box = "1" THEN (SELECT first_name || ' ' || last_name FROM MeContact)
                             WHEN M.msg_box = "2" THEN C_MMS.first_name || ' ' || C_MMS.last_name
                             ELSE 'ERROR !'
-                        END AS [Recipient Name],
+                        END AS [Recipient name],
                         CASE
                             WHEN M.msg_box = "1" THEN (SELECT phone FROM MeAddress)
                             WHEN M.msg_box = "2" THEN CPN2.phone
                             ELSE 'ERROR !'
-                        END AS [Recipient Address],
+                        END AS [Recipient address],
                         M.date AS [Date],
                         M.time AS [Time],
                         '' AS [Original filename],
@@ -482,13 +414,14 @@ def find_messages_with_word(contact_id, word):
                     ON MMP.mms_id = M.mms_id
                     JOIN MmsPart AS MP
                     ON MP.part_id = MMP.part_id
-                    WHERE C_MMS.contact_id = {contact_id} AND MP_sub.text LIKE '%{word}%'
+                    WHERE C_MMS.contact_id = {contact_id} AND Content LIKE '%{word}%'
                     GROUP BY M.mms_id
                 """
-    query_end_order = f""" ORDER BY Date, Time """
+    query_end_order = f"""  GROUP BY E.message_id
+                            ORDER BY Date, Time """
 
     query = query_1_sms_with + query_2_emails + query_3_union + query_4_sms + query_5_union + query_6_mms + query_end_order
-
+    query = query_2_emails + query_end_order
     cursor.execute(query)
     results = cursor.fetchall()
     if results:
