@@ -1,0 +1,6 @@
+pytz
+python-dotenv
+pdfkit
+mailbox
+mail-parser
+python-dateutil
