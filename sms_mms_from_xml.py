@@ -14,6 +14,25 @@ xml_file_path = f"{XML_FILE_DIRECTORY}/{SMS_FILENAME}"
 
 
 def read_sms_mms_from_xml(xml_file_path):
+    """
+    Reads SMS and MMS messages from an XML file and returns them as lists.
+
+    Args:
+        xml_file_path (str): The path to the XML file containing SMS and MMS data.
+
+    Returns:
+        tuple: A tuple containing two lists - SMS messages and MMS messages.
+
+        SMS messages are represented as instances of the `SMS` class with attributes like protocol, address, date, type,
+        subject, body, and more.
+
+        MMS messages are represented as instances of the `MMS` class with attributes like date, rr, sub, ct_t, read_status,
+        seen, msg_box, address, and more.
+
+    Note:
+        The XML file should follow a specific format with elements for SMS and MMS messages, including their metadata
+        and parts.
+    """
     sms_list = []
     mms_list = []
     # Vérification si xml_file_path est None
@@ -125,7 +144,7 @@ def read_sms_mms_from_xml(xml_file_path):
                   exp=exp, locked=locked, m_id=m_id, st=st, retr_txt_cs=retr_txt_cs, retr_txt=retr_txt, creator=creator,
                   date_sent=date_sent, read=read, m_size=m_size, rpt_a=rpt_a, ct_cls=ct_cls, pri=pri, sub_id=sub_id,
                   tr_id=tr_id, resp_txt=resp_txt, ct_l=ct_l, m_cls=m_cls, d_rpt=d_rpt, v=v, _id=_id, m_type=m_type,
-                  readable_date= readable_date, contact_name=contact_name, parts=parts_list, addrs=addrs_list)
+                  readable_date=readable_date, contact_name=contact_name, parts=parts_list, addrs=addrs_list)
         mms_list.append(mms)
 
     return sms_list, mms_list

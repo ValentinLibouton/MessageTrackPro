@@ -1,5 +1,0 @@
-chardet
-bs4
-pytz
-python-dotenv
-pdfkit
