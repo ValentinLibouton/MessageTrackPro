@@ -252,6 +252,7 @@ def link_tag_to_message(tag, primary_key):
     cursor.execute(query_email)
     message_id = cursor.fetchone()
 
+
     cursor.execute(query_sms)
     sms_id = cursor.fetchone()
 
@@ -277,34 +278,40 @@ def link_tag_to_message(tag, primary_key):
                 WHERE mms_id = '{primary_key}' AND tag_id = {tag_id}"""
 
     if message_id:
+        print(f"Tag: {tag} - primary key: {primary_key} come from Emails table")
         table = "Emails"
         message_id = message_id[0]
         # check if message_id already linked to tag_id
         cursor.execute(query_get_mtm_message_id)
         mtm_email = cursor.fetchone()
         if not mtm_email:
+            print(f"Tag: {tag} - primary key: {primary_key} inserted in MTM_Tags")
             cursor.execute(query_insert_tag_email, (message_id, tag_id))
             connection.commit()
     elif sms_id:
+        print(f"Tag: {tag} - primary key: {primary_key} come from Sms table")
         table = "Sms"
         sms_id = sms_id[0]
         # check if sms_id already linked to tag_id
         cursor.execute(query_get_mtm_sms_id)
         mtm_sms = cursor.fetchone()
         if not mtm_sms:
+            print(f"Tag: {tag} - primary key: {primary_key} inserted in MTM_Tags")
             cursor.execute(query_insert_tag_sms, (sms_id, tag_id))
             connection.commit()
     elif mms_id:
+        print(f"Tag: {tag} - primary key: {primary_key} come from Mms table")
         table = "Mms"
         mms_id = mms_id[0]
         # check if mms_id already linked to tag_id
         cursor.execute(query_get_mtm_mms_id)
         mtm_mms = cursor.fetchone()
         if not mtm_mms:
+            print(f"Tag: {tag} - primary key: {primary_key} inserted in MTM_Tags")
             cursor.execute(query_insert_tag_mms, (mms_id, tag_id))
             connection.commit()
     connection.close()
-    print(f"Tag: {tag} linked to primary key: {primary_key} of table:{table}")
+    #print(f"Tag: {tag} linked to primary key: {primary_key} of table:{table}")
 
 
 def insert_tags_from_csv(csv_tags=CSV_TAGS):

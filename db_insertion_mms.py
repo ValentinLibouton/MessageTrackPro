@@ -281,8 +281,8 @@ def add_mmses(mms_list):
 
         # Liste pour stocker les ID des numéros de téléphone liés à ce SMS
         phone_ids = []
-
-        for address in mms.address:
+        for address in mms.recipient_list:
+        #for address in mms.address:
             phone_id = add_address(str_address=address)
             phone_ids.append(phone_id)
 
@@ -306,7 +306,7 @@ def add_mmses(mms_list):
                                    mms.m_cls, mms.d_rpt,
                                    mms.v, mms.id, mms.m_type, mms.readable_date))
             connection.commit()
-            # ToDo: Je dois m'assurer que tout est ok ci-dessous!
+
             for part in mms.parts:
                 part_id = add_part(part=part)
                 # Creation of the link between tables

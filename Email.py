@@ -7,6 +7,7 @@ dotenv_path = "variables.env"
 load_dotenv(dotenv_path)
 TIMEZONE = os.getenv("TIMEZONE")
 
+
 class Email:
     """
         Represents an email message parsed from a file.
@@ -217,5 +218,4 @@ class Email:
         Attachments names:\t{self.attachments_names()}\n\n
         """
 
-if __name__ == "__main__":
-    pass
+

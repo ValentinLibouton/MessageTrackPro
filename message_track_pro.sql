@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS Sms (
 
 );
 CREATE TABLE IF NOT EXISTS Sms_ContactPhoneNumber (
-    sms_id INTEGER,
+    sms_id TEXT,
     phone_id INTEGER,
     FOREIGN KEY (sms_id) REFERENCES Sms (sms_id),
     FOREIGN KEY (phone_id) REFERENCES ContactPhoneNumbers (phone_id)
@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS Mms_MmsAddr (
 );
 
 CREATE TABLE IF NOT EXISTS Mms_ContactPhoneNumber (
-    mms_id INTEGER,
+    mms_id TEXT,
     phone_id INTEGER,
     FOREIGN KEY (mms_id) REFERENCES Mms (mms_id),
     FOREIGN KEY (phone_id) REFERENCES ContactPhoneNumbers (phone_id)

@@ -1,6 +1,17 @@
-import pdfkit
+import pdfkit, os
+import db_viewer as db_v
+import db_insertion_update
 from datetime import datetime
+from dotenv import load_dotenv
+from bs4 import BeautifulSoup
+# Load environnement variables from .env
+dotenv_path = "variables.env"
+load_dotenv(dotenv_path)
 
+OUTPUT_HTML = os.getenv("OUTPUT_HTML")
+OUTPUT_PDF = os.getenv("OUTPUT_PDF")
+TITLE = os.getenv("TITLE")
+CSV_TAGS = os.getenv("CSV_TAGS")
 
 def generate_html(title, list_of_messages_obj):
     """
@@ -58,16 +69,25 @@ def generate_html(title, list_of_messages_obj):
         # Numéro de message (optionnel)
         html += "<h2>Message {}</h2>".format(i + 1)
 
+        # Ouvrir une div pour le message
+        html += '<div style="clear: both;">'
+
         # Insérer les détails du message
         html += "<b>Date:</b> {} {}&nbsp;&nbsp;&nbsp;&nbsp;<b>Message id:</b> {}&nbsp;&nbsp;&nbsp;&nbsp;<b>Filename:</b> {}<br>".format(
             message.date, message.time, message.message_id, message.filename)
         html += "<b>Sender:</b> {} {}<br>".format(message.sender_name, message.sender_address)
-        html += "<b>Recipient:</b> {} {}&nbsp;&nbsp;&nbsp;&nbsp;<b>Recipient type:</b> {}<br>".format(message.recipient_name,
-                                                                                        message.recipient_address,
-                                                                                        message.recipient_type)
+        html += "<b>Recipient:</b> {} {}&nbsp;&nbsp;&nbsp;&nbsp;<b>Recipient type:</b> {}<br>".format(
+            message.recipient_name,
+            message.recipient_address,
+            message.recipient_type)
         html += "<b>Attachments:</b> {}<br>".format(message.attachments)
         html += "<b>Tags:</b> {}<br>".format(message.tags)
+
+        # Insérer le contenu du message
         html += "<b>Body:</b><br>{}".format(message.content)
+
+        # Fermer la div pour le message
+        html += '</div>'
 
         # Séparation entre les messages
         if i < len(list_of_messages_obj) - 1:
@@ -117,14 +137,15 @@ def write_messages(title, list_of_messages_obj):
         None
     """
     # Generation du code HTML
-    html_content = write_messages(title=title, list_of_messages_obj=list_of_messages_obj)
+    html_content = generate_html(title=title, list_of_messages_obj=list_of_messages_obj)
 
     # Écriture du contenu HTML dans un fichier
-    with open("output.html", "w") as html_file:
+    with open(OUTPUT_HTML, "w") as html_file:
         html_file.write(html_content)
     # Convertion en PDF
-    html_to_pdf("output.html", "output.pdf")
+    html_to_pdf(OUTPUT_HTML, OUTPUT_PDF)
 
 
 if __name__ == "__main__":
-    pass
+    headers, list_of_messages_obj = db_v.get_messages(contact_id=3, word="école", start_date="2023-05-15", end_date="2023-09-24")
+    write_messages(title=TITLE, list_of_messages_obj=list_of_messages_obj)

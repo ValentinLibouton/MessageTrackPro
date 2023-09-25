@@ -37,7 +37,7 @@ def generate_eml_from_mbox(mbox_filepath=MBOX_FILEPATH, mbox_output_directory=MB
         # Parcourir tous les e-mails dans la boîte aux lettres mbox
         for i, msg in enumerate(mbox):
             filename = f"email_{i+1}.eml"
-            filepath = f"{MBOX_OUTPUT_DIRECTORY}/{filename}"
+            filepath = f"{mbox_output_directory}/{filename}"
             with open(filepath, 'w', errors='ignore') as eml_file:
                 eml_file.write(msg.as_string())
 

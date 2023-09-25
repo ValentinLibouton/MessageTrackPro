@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-import sms as s, mms as m
+import Sms as s, Mms as m
 import os
 from dotenv import load_dotenv
 # Load environnement variables from .env
