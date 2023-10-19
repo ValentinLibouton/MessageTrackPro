@@ -4,3 +4,4 @@ pdfkit
 mailbox
 mail-parser
 python-dateutil
+bs4
