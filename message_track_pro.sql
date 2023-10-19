@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS Calls (
     FOREIGN KEY (caller_phone_id) REFERENCES ContactPhoneNumbers(phone_id),
     FOREIGN KEY (callee_phone_id) REFERENCES ContactPhoneNumbers(phone_id)
 );
-DROP TABLE IF EXISTS Mms;
+
 CREATE TABLE IF NOT EXISTS Mms (
     mms_id TEXT PRIMARY KEY,
     msg_box_str TEXT,  -- String "Received" or "Sent"
@@ -198,4 +198,40 @@ CREATE TABLE IF NOT EXISTS MTM_Tags (
     FOREIGN KEY (sms_id) REFERENCES  Sms (sms_id),
     FOREIGN KEY (mms_id) REFERENCES  Mms (mms_id),
     FOREIGN KEY (tag_id) REFERENCES Tags (tag_id)
+);
+
+CREATE TABLE IF NOT EXISTS ContactMessenger (
+    surname_id INTEGER PRIMARY KEY,
+    contact_id INTEGER,
+    surname TEXT,
+    FOREIGN KEY (contact_id) REFERENCES Contacts (contact_id)
+
+);
+
+CREATE TABLE IF NOT EXISTS GroupMessenger (
+    group_id INTEGER PRIMARY KEY,
+    group_name TEXT
+
+);
+
+CREATE TABLE IF NOT EXISTS Messenger (
+    messenger_id INTEGER PRIMARY KEY,
+    message TEXT,
+    date DATE,
+    time TIME,
+    group_id INTEGER,
+    surname_id INTEGER,
+    FOREIGN KEY (group_id) REFERENCES GroupMessenger (group_id),
+    FOREIGN KEY (surname_id) REFERENCES ContactMessenger (surname_id)
+);
+
+
+
+CREATE TABLE IF NOT EXISTS MTM_GroupMessenger_ContactMessenger (
+    group_id INTEGER,
+    surname_id INTEGER,
+    FOREIGN KEY (group_id) REFERENCES GroupMessenger (group_id),
+    FOREIGN KEY (surname_id) REFERENCES ContactMessenger (surname_id)
+
 )
+
