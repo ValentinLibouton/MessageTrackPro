@@ -75,7 +75,10 @@ def generate_html(title, list_of_messages_obj):
         # Insérer les détails du message
         html += "<b>Date:</b> {} {}&nbsp;&nbsp;&nbsp;&nbsp;<b>Message id:</b> {}&nbsp;&nbsp;&nbsp;&nbsp;<b>Filename:</b> {}<br>".format(
             message.date, message.time, message.message_id, message.filename)
-        html += "<b>Sender:</b> {} {}<br>".format(message.sender_name, message.sender_address)
+        html += "<b>Sender:</b> {} {}&nbsp;&nbsp;&nbsp;&nbsp;<b>Subject:</b> {}<br>".format(
+            message.sender_name,
+            message.sender_address,
+            message.subject)
         html += "<b>Recipient:</b> {} {}&nbsp;&nbsp;&nbsp;&nbsp;<b>Recipient type:</b> {}<br>".format(
             message.recipient_name,
             message.recipient_address,
@@ -147,5 +150,4 @@ def write_messages(title, list_of_messages_obj):
 
 
 if __name__ == "__main__":
-    headers, list_of_messages_obj = db_v.get_messages(contact_id=3, word="école", start_date="2023-05-15", end_date="2023-09-24")
-    write_messages(title=TITLE, list_of_messages_obj=list_of_messages_obj)
+    pass
