@@ -28,6 +28,7 @@ def create_primary_key(mms):
     primary_key = f"{mms.strdate}{mms.strtime}{mms.date_sent}"
     return primary_key
 
+
 def check_value_existence(table_name, column_name, value):
     """
     Checks the existence of a value in a specific column of a database table.

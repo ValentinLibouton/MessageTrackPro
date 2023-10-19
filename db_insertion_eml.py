@@ -1,6 +1,6 @@
 import sqlite3
 import os
-import Email
+from models import Email
 from dotenv import load_dotenv
 # Load environnement variables from .env
 dotenv_path = "variables.env"
