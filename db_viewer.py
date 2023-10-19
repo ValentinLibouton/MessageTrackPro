@@ -1,6 +1,6 @@
 import sqlite3
 import os
-import Message
+from models import Message
 from dotenv import load_dotenv
 
 # Load environnement variables from .env
@@ -78,7 +78,7 @@ def get_message_ids_with_tag_id(tag_id):
 
 def get_headers():
     return ['Sender name', 'Sender address', 'Recipient type', 'Recipient name', 'Recipient address', "Date", "Time",
-            "Original filename", "Content", "Attachments", "Tags", "Message id"]
+            "Subject", "Original filename", "Content", "Attachments", "Tags", "Message id"]
 
 
 def get_contact_id(first_name, last_name):
@@ -217,6 +217,7 @@ def find_messages_with_tag(tag):
                                     CE2.email [Recipient address],
                                     E.date AS [Date],
                                     E.time AS [Time],
+                                    E.subject AS [Subject],
                                     E.original_filename AS [Original filename],
                                     E.content AS [Content],
                                     (
@@ -276,6 +277,7 @@ def find_messages_with_tag(tag):
                                 END AS [Recipient address],
                                 S.date AS [Date],
                                 S.time AS [Time],
+                                'No subject' AS [Subject],
                                 S.original_filename AS [Original filename],
                                 S.body AS [Content],
                                 'None' AS [Attachments],
@@ -325,6 +327,7 @@ def find_messages_with_tag(tag):
                             END AS [Recipient address],
                             M.date AS [Date],
                             M.time AS [Time],
+                            'No subject' AS [Subject],
                             'None' AS [Original filename],
                             (
                                 SELECT text
@@ -470,6 +473,7 @@ def get_messages(contact_id, word=None, start_date=None, end_date=None):
             CE2.email [Recipient address],
             E.date AS [Date],
             E.time AS [Time],
+            E.subject AS [Subject],
             E.original_filename AS [Original filename],
             E.content AS [Content],
             (
@@ -525,6 +529,7 @@ def get_messages(contact_id, word=None, start_date=None, end_date=None):
         END AS [Recipient address],
         S.date AS [Date],
         S.time AS [Time],
+        'No subject' AS [Subject],
         S.original_filename AS [Original filename],
         S.body AS [Content],
         'None' AS [Attachments],
@@ -570,6 +575,7 @@ def get_messages(contact_id, word=None, start_date=None, end_date=None):
         END AS [Recipient address],
         M.date AS [Date],
         M.time AS [Time],
+        'No subject' AS [Subject],
         'None' AS [Original filename],
         (
             SELECT text
@@ -614,6 +620,21 @@ def get_messages(contact_id, word=None, start_date=None, end_date=None):
         ON MP.part_id = MMP.part_id
         WHERE (C_MMS.contact_id = {contact_id} OR C_MMS.contact_id = {your_contact_id}) AND (Date BETWEEN '{start_date}' AND '{end_date}')"""
 
+    #ToDo: "query_6_messenger" doit très probablement disparaître
+    query_6_messenger = f"""
+        SELECT
+        C_M.first_name || ' ' || C_M.last_name AS [Sender name],
+        C_MSNGR.surname AS [Sender address],
+        G_M.group_name AS [Recipient type]
+    FROM Messenger AS MSNGR
+    JOIN ContactMessenger AS C_MSNGR
+    ON C_MSNGR.surname_id = MSNGR.surname_id
+    JOIN Contacts AS C_M
+    ON C_M.contact_id = C_MSNGR.contact_id
+    JOIN GroupMessenger AS G_M
+    ON G_M.group_id = MSNGR.group_id
+        """
+
     query = query_1_sms_with + query_2_emails + concat_where_email + union + query_4_sms + concat_where_sms + union + query_5_mms + concat_where_mms + order
     results = None
     try:
@@ -631,7 +652,55 @@ def get_messages(contact_id, word=None, start_date=None, end_date=None):
             messages.append(message_obj)
     return headers, messages
 
+def get_contact_messenger(contact_id):
+    query = f"""
+    SELECT surname_id, surname FROM ContactMessenger WHERE contact_id = ?
+    """
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute(query,(contact_id,))
+    result = cursor.fetchone()
+    return result
+
+def get_groups_messenger_for_contact_messenger(surname_id):
+    query_group_id = f"""
+    SELECT group_id FROM MTM_GroupMessenger_ContactMessenger WHERE surname_id = ?
+    """
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute(query_group_id, (surname_id,))
+    g_ids = cursor.fetchall()
+    group_ids = tuple([elem[0] for elem in g_ids])
+    query_group = f"""
+    SELECT * FROM GroupMessenger WHERE group_id IN {group_ids}
+    """
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute(query_group)
+    result = cursor.fetchall()
+    return result
+
+def get_messenger_for_group_ids(group_ids):
+
+    query_messenger = f"""
+    SELECT * FROM Messenger WHERE group_id IN {group_ids}
+    """
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    cursor.execute(query_messenger)
+    result = cursor.fetchall()
+    return result
+
+
 
 if __name__ == "__main__":
-    pass
+    surname_id, surname = get_contact_messenger(2)
+    print(surname_id)
+    ids__names = get_groups_messenger_for_contact_messenger(surname_id)
+    group_ids = tuple([element[0] for element in ids__names])
+    res = get_messenger_for_group_ids(group_ids)
+    for r in res:
+        print(r)
+
+
 

@@ -166,11 +166,14 @@ def insert_contacts_from_csv(csv_filename=CSV_FILENAME):
                 last_name = contact['last_name']
                 phone_numbers = contact['phone_numbers'].split(',')
                 email_addresses = contact['email_addresses'].split(',')
+                messenger_names = contact['messenger_name'].split(',')
                 contact_id = add_contact(first_name=first_name, last_name=last_name)
                 for phone in phone_numbers:
                     link_phone_to_contact(phone=phone, contact_id=contact_id)
                 for email_address in email_addresses:
                     link_email_to_contact(email=email_address, contact_id=contact_id)
+                for messenger_name in messenger_names:
+                    link_surname_messenger_to_contact(surname=messenger_name, contact_id=contact_id)
     else:
         print(f"Le fichier {csv_filename} n'existe pas.")
 
@@ -334,6 +337,29 @@ def insert_tags_from_csv(csv_tags=CSV_TAGS):
                 link_tag_to_message(tag=tag, primary_key=message_id)
     else:
         print(f"Le fichier {csv_tags} n'existe pas.")
+
+def link_surname_messenger_to_contact(surname, contact_id):
+    retr_surname = None
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+    # Vérifier d'abord si le surnom existe dans la base de données
+    cursor.execute("SELECT surname FROM ContactMessenger WHERE surname = ?", (surname,))
+    retr_surname = cursor.fetchone()
+    if retr_surname:
+        # Le surnom existe déjà, nous pouvons le mettre à jour
+        query = """UPDATE ContactMessenger
+                           SET contact_id = ?
+                           WHERE surname = ?"""
+        cursor.execute(query, (contact_id, surname))
+    else:
+        # Le surnom n'existe pas encore, nous pouvons l'ajouter
+        query = """INSERT INTO ContactMessenger (contact_id, surname)
+                           VALUES (?, ?)"""
+        cursor.execute(query, (contact_id, surname))
+
+    connection.commit()
+    connection.close()
+    print(f"Contact_id: {contact_id} linked to messenger surname: {surname}")
 
 
 if __name__ == "__main__":
